@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.ccs.zhang.coolweathertest.model.City;
+import com.ccs.zhang.coolweathertest.model.County;
 import com.ccs.zhang.coolweathertest.model.Province;
 
 import java.util.ArrayList;
@@ -75,5 +77,77 @@ public class CoolWeatherDB {
             cursor.close();
         }
         return provinceList;
+    }
+
+    /**
+     * 将city实例保存到数据库中
+     * @param city
+     */
+    public void saveCity(City city){
+        if(city != null){
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("",city.getCityName());
+            contentValues.put("",city.getCityCode());
+            contentValues.put("",city.getProvinceId());
+            sqLiteDatabase.insert("City",null,contentValues);
+        }
+    }
+
+    /**
+     * 读取某省份下的所有城市信息
+     * @param provinceId
+     * @return
+     */
+    public List<City> loadCities(int provinceId){
+        List<City> cityList = new ArrayList<City>();
+        Cursor cursor = sqLiteDatabase.query("City",null,"province_id = ?",new String[]{String.valueOf(provinceId)},null,null,null);
+        while (cursor.moveToNext()){
+            City city = new City();
+            city.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            city.setCityName(cursor.getString(cursor.getColumnIndex("city_name")));
+            city.setCityCode(cursor.getString(cursor.getColumnIndex("city_code")));
+            city.setProvinceId(cursor.getInt(cursor.getColumnIndex("province_id")));
+            cityList.add(city);
+        }
+        if (cursor != null){
+            cursor.close();
+        }
+        return cityList;
+    }
+
+    /**
+     * 将County实例保存到数据库中
+     * @param county
+     */
+    public void saveCounty(County county){
+        if (county != null){
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("county_name",county.getCountyName());
+            contentValues.put("county_code",county.getCountyCode());
+            contentValues.put("city_id",county.getCityId());
+            sqLiteDatabase.insert("County",null,contentValues);
+        }
+    }
+
+    /**
+     * 从数据库读取某城市下所有的县信息
+     * @param cityId
+     * @return
+     */
+    public List<County> loadCounties(int cityId){
+        List<County> countyList = new ArrayList<County>();
+        Cursor cursor = sqLiteDatabase.query("County",null,"city_id = ?",new String[]{String.valueOf(cityId)},null,null,null);
+        while (cursor.moveToNext()){
+            County county = new County();
+            county.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            county.setCountyName(cursor.getString(cursor.getColumnIndex("county_name")));
+            county.setCountyCode(cursor.getString(cursor.getColumnIndex("county_code")));
+            county.setCityId(cityId);
+            countyList.add(county);
+        }
+        if (cursor != null){
+            cursor.close();
+        }
+        return countyList;
     }
 }
