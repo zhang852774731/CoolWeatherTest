@@ -3,6 +3,7 @@ package com.ccs.zhang.coolweathertest.db;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * Created by zhang on 2015/1/28.
@@ -37,12 +38,13 @@ public class CoolWeatherOpenHelper extends SQLiteOpenHelper{
             +"county_code text,"
             +"city_id integer)";
 
-    public CoolWeatherOpenHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
+    public CoolWeatherOpenHelper(Context context,String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        Log.e("Helper","helper");
         db.execSQL(CREATE_PROVINCE);
         db.execSQL(CREATE_CITY);
         db.execSQL(CREATE_COUNTY);

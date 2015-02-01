@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.ccs.zhang.coolweathertest.model.City;
 import com.ccs.zhang.coolweathertest.model.County;
@@ -40,6 +41,7 @@ public class CoolWeatherDB {
      * @return
      */
     public synchronized static CoolWeatherDB getInstance(Context context){
+        Log.e("coolweatherdb","coolweatherdb");
         if(coolWeatherDB == null){
             coolWeatherDB = new CoolWeatherDB(context);
         }
@@ -86,9 +88,9 @@ public class CoolWeatherDB {
     public void saveCity(City city){
         if(city != null){
             ContentValues contentValues = new ContentValues();
-            contentValues.put("",city.getCityName());
-            contentValues.put("",city.getCityCode());
-            contentValues.put("",city.getProvinceId());
+            contentValues.put("city_name",city.getCityName());
+            contentValues.put("city_code",city.getCityCode());
+            contentValues.put("province_id",city.getProvinceId());
             sqLiteDatabase.insert("City",null,contentValues);
         }
     }

@@ -2,8 +2,12 @@ package com.ccs.zhang.coolweathertest.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -63,16 +67,28 @@ public class ChooseAreaActivity extends Activity{
      * 当前选中的级别，初始化为省一级别的
      */
     private int currentLevel = 0;
+    /**
+     * 是否从weatherAcitivy中跳转过来
+     */
+    private boolean isFromWeatherActivity;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        isFromWeatherActivity = getIntent().getBooleanExtra("from_weather_activity",false);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (preferences.getBoolean("city_selected",false) && !isFromWeatherActivity){
+            Intent intent = new Intent();
+            intent.setClass(ChooseAreaActivity.this,WeatherActivity.class);
+            startActivity(intent);
+            finish();
+        }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.choose_area);
         titleText = (TextView)findViewById(R.id.title_text);
         listView = (ListView)findViewById(R.id.list_view);
         adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,dataList);
         listView.setAdapter(adapter);
-        coolWeatherDB = CoolWeatherDB.getInstance(this);
+        coolWeatherDB = CoolWeatherDB.getInstance(ChooseAreaActivity.this);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -82,6 +98,13 @@ public class ChooseAreaActivity extends Activity{
                 }else if (currentLevel == LEVEL_CITY){
                     selectedCity = cityList.get(position);
                     queryCounties();
+                }else if (currentLevel == LEVLE_COUNTY){
+                    String countyCode = countyList.get(position).getCountyCode();
+                    Intent intent = new Intent();
+                    intent.setClass(ChooseAreaActivity.this,WeatherActivity.class);
+                    intent.putExtra("county_code",countyCode);
+                    startActivity(intent);
+                    finish();
                 }
             }
         });
@@ -92,6 +115,7 @@ public class ChooseAreaActivity extends Activity{
      * 查询全国所有省份，优先从数据库中查询，如果没有查询到在去服务器查询
      */
     private void queryProvinces(){
+        Log.e("queryProvinces","queryProvinces");
         provinceList = coolWeatherDB.loadProvinces();
         if (provinceList.size() > 0){
             dataList.clear();
@@ -147,33 +171,34 @@ public class ChooseAreaActivity extends Activity{
 
     private void queryFromServer(final String code,final String type){
         String address;
+        Log.e("queryFromServer方法","queryFromServer");
         if (!TextUtils.isEmpty(code)){
             address = "http://www.weather.com.cn/data/list3/city"+code+".xml";
         }else {
             address = "http://www.weather.com.cn/data/list3/city.xml";
         }
         showProgressDialog();
-        HttpUtil.sendHttpRequest(address,new HttpCallBackListener() {
+        HttpUtil.sendHttpRequest(address, new HttpCallBackListener() {
             @Override
             public void onFinish(String response) {
                 boolean result = false;
-                if ("province".equals(type)){
-                    result = Utility.handleProvinceResponse(coolWeatherDB,response);
-                }else if ("city".equals(type)){
-                    result =Utility.handleCityResponse(coolWeatherDB,response,selectedProvince.getId());
-                }else {
-                    result = Utility.handleCountyResponse(coolWeatherDB,response,selectedCity.getId());
+                if ("province".equals(type)) {
+                    result = Utility.handleProvinceResponse(coolWeatherDB, response);
+                } else if ("city".equals(type)) {
+                    result = Utility.handleCityResponse(coolWeatherDB, response, selectedProvince.getId());
+                } else {
+                    result = Utility.handleCountyResponse(coolWeatherDB, response, selectedCity.getId());
                 }
-                if (result){
+                if (result) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             closeProgressDialog();
-                            if ("province".equals(type)){
+                            if ("province".equals(type)) {
                                 queryProvinces();
-                            }else if ("city".equals(type)){
+                            } else if ("city".equals(type)) {
                                 queryCities();
-                            }else {
+                            } else {
                                 queryCounties();
                             }
                         }
@@ -187,7 +212,7 @@ public class ChooseAreaActivity extends Activity{
                     @Override
                     public void run() {
                         closeProgressDialog();
-                        Toast.makeText(ChooseAreaActivity.this,"加载失败",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ChooseAreaActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -216,6 +241,10 @@ public class ChooseAreaActivity extends Activity{
         }else if (currentLevel == LEVEL_CITY){
             queryProvinces();
         }else {
+            if (isFromWeatherActivity){
+                Intent intent = new Intent(this,WeatherActivity.class);
+                startActivity(intent);
+            }
             finish();
         }
     }
